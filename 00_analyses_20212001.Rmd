@@ -1,0 +1,32 @@
+---
+title: "Descrpitive Analyses"
+author: "Gian-Andrea Egeler"
+date: "1 10 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+# Guidelines for Plots: https://www.science.org/content/page/instructions-preparing-initial-manuscript
+
+#load packages - check description file for further details
+library(renv)
+library(readr)
+library(dplyr)
+library(here)
+library(lubridate)
+library(ggplot)
+
+=> check sessionInfo() to update description file, then renv::init(), renv::settings$snapshot.type("explicit") (not sure which first)
+
+```
+
+
+```{r load_data}
+
+nova
+nova_survey
+
+```
+

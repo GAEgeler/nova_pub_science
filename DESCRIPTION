@@ -1,0 +1,15 @@
+Package: nova_pub
+Title: Descriptive Analyses for the Paper:
+Version: 0.1
+Authors@R: person("Gian-Andrea", "Egeler", email = "gianandrea.egeler@gmail.com",
+                  role = c("aut", "cre"))
+Description: What the package does (one paragraph), short description how to handle the renv::restore() package!?
+Depends: 
+  R (>= 4)
+  dplyr ()
+  readr ()
+  here ()
+  renv ()
+
+License: What license is it under?
+LazyData: true
