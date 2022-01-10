@@ -24,7 +24,7 @@ source("R/01_plot_functions_211112.R")
 source("R/01_config_file_211112.R")
 
 
-#TODO: check the figure width and heights
+#TODO: mostly agree vs. rather agree??
 
 ```
 
@@ -47,7 +47,7 @@ nova_survey <- readr::read_delim("https://zenodo.org/record/3554884/files/2019_Z
 
 # POS of canteen
 
-> Code-Author: Gian-Andrea Egeler [2020](https://github.com/GAEgeler/tilldata_2017)
+> Code-Author: Gian-Andrea Egeler [based on 2020](https://github.com/GAEgeler/tilldata_2017)
 
 ## Meal content per intervention
 
@@ -56,12 +56,14 @@ nova_survey <- readr::read_delim("https://zenodo.org/record/3554884/files/2019_Z
 #prepare data allover
 df_nova <- nova_ind %>% 
   dplyr::filter(member != "Spezialkarten") %>% 
-  mutate(label_content = stringr::str_replace(.$label_content, "Geflügel", "Meat")) %>% 
+  mutate(label_content = stringr::str_replace(.$label_content, 
+                                              "Geflügel", "Meat")) %>% 
   group_by(condit, label_content) %>%
   summarise(tot_sold = n()) %>% 
   mutate(pct = tot_sold / sum(tot_sold)) %>% 
   ungroup() %>% 
-  mutate(label_content = if_else(is.na(.$label_content), "Unknown", .$label_content),
+  mutate(label_content = if_else(is.na(.$label_content), "Unknown", 
+                                 .$label_content),
            gender = "All") %>% 
   mutate(label_content = recode(label_content, 
                                 "Unbekannt" = "Unknown",
@@ -70,7 +72,7 @@ df_nova <- nova_ind %>%
                                 "Vegetarisch" = "Vegetarian",
                                 "Fisch"="Fish",
                                 "Fleisch" = "Meat")) %>% 
-  mutate(condit = if_else(condit == "Basis", "Base", "Intervention"))
+  mutate(condit = if_else(condit == "Basis", "Base week", "Intervention"))
 
 # prepare xlab
 df_all <- df_nova %>% 
@@ -85,12 +87,14 @@ df_all <- df_nova %>%
 #prepare data for gender
 df_gender <- nova_ind %>% 
     filter(member != "Spezialkarten") %>%
-    mutate(label_content = stringr::str_replace(.$label_content, "Geflügel", "Meat")) %>%
+    mutate(label_content = stringr::str_replace(.$label_content, 
+                                                "Geflügel", "Meat")) %>%
     group_by(gender, condit, label_content) %>%
     summarise(tot_sold = n()) %>% 
     mutate(pct = tot_sold / sum(tot_sold)) %>% 
     ungroup() %>% 
-    mutate(label_content = if_else(is.na(.$label_content), "Unknown", .$label_content)) %>% 
+    mutate(label_content = if_else(is.na(.$label_content), "Unknown", 
+                                   .$label_content)) %>% 
     mutate(label_content = recode(label_content, 
                                 "Unbekannt" = "Unknown",
                                 "Pflanzlich" = "Vegan (meat substitute)", 
@@ -98,8 +102,8 @@ df_gender <- nova_ind %>%
                                 "Vegetarisch" = "Vegetarian",
                                 "Fisch"="Fish",
                                 "Fleisch" = "Meat")) %>%  
-    mutate(gender = ifelse(.$gender == "F", "Women", "Men")) %>% 
-  mutate(condit = if_else(condit == "Basis", "Base", "Intervention"))
+    mutate(gender = ifelse(.$gender == "F", "Female", "Male")) %>% 
+  mutate(condit = if_else(condit == "Basis", "Base week", "Intervention"))
   
 # prepare plot data
 df_gender %<>% 
@@ -108,7 +112,8 @@ df_gender %<>%
     ungroup() %>% 
     mutate(text = paste("n = ", format(tot_sold, big.mark = "'"), sep = "")) %>% 
     select(-tot_sold) %>% 
-    left_join(df_gender, .[ , c("gender", "condit", "text")], by = c("gender", "condit")) %>% 
+    left_join(df_gender, .[ , c("gender", "condit", "text")],
+              by = c("gender", "condit")) %>% 
     mutate(xlab = paste(condit, text, sep = "\n"))
 
 
@@ -122,15 +127,19 @@ dat$label_color <- as.factor(sapply(unlist(NamesPerContent)[dat$label_content],
 #plot
 p <- ggplot(dat, 
             aes(factor(xlab,
-                       levels = c("Intervention\nn = 10'399","Base\nn = 10'641",
-                                  "Intervention\nn = 3'909", "Base\nn = 3'968",
-                                  "Intervention\nn = 6'490","Base\nn = 6'673")),
+                       levels = c("Intervention\nn = 10'399",
+                                  "Base week\nn = 10'641",
+                                  "Intervention\nn = 3'909", 
+                                  "Base week\nn = 3'968",
+                                  "Intervention\nn = 6'490",
+                                  "Base week\nn = 6'673")),
                 pct, 
                 fill = factor(label_content, attributes(NamesPerContent)$names), 
                 color = label_color)) + 
         geom_bar(stat = "identity", 
                  position = position_stack(), 
-                 color = NA) + # set color NA otherwise error occurs
+                 color = NA,
+                 width = .8) + # set color NA otherwise error occurs
         xlab("") +
         ylab("")+
         guides(fill = guide_legend("", reverse = TRUE, nrow = 1),
@@ -142,9 +151,13 @@ p <- ggplot(dat,
         geom_text(aes(label=ifelse(pct < 0.02,"", 
                                    scales::percent(round(pct, 2), accuracy = 1))), 
                   size =22 * converter, 
-                  position = position_stack(vjust = 0.5)) + 
+                  position = position_stack(vjust = 0.5),
+                  fontface = "bold") + 
         coord_flip() +
-        facet_wrap(~factor(gender, levels = c("All", "Women", "Men")), nrow = NULL, ncol = 1, scales = "free_y") +
+        facet_wrap(~factor(gender, levels = c("All", "Female", "Male")), 
+                   nrow = NULL, 
+                   ncol = 1, 
+                   scales = "free_y") +
         mytheme_survey 
 # save
 ggsave(filename = paste0(wd_plots, "/pos_overall_experiment_",
@@ -152,7 +165,7 @@ ggsave(filename = paste0(wd_plots, "/pos_overall_experiment_",
                          ".pdf"),
        p,
        height = 8,
-       width = 16,
+       width = 21,
        dpi = 300,
        device = cairo_pdf) 
 
@@ -165,7 +178,8 @@ ggsave(filename = paste0(wd_plots, "/pos_overall_experiment_",
 #prepare data allover
 df_nova <- nova_ind %>% 
   dplyr::filter(member != "Spezialkarten") %>% 
-  mutate(label_content = stringr::str_replace(.$label_content, "Geflügel", "Meat")) %>% 
+  mutate(label_content = stringr::str_replace(.$label_content, 
+                                              "Geflügel", "Meat")) %>% 
   group_by(member, gender, label_content) %>%
   summarise(tot_sold = n()) %>% 
   mutate(pct = tot_sold / sum(tot_sold)) %>% 
@@ -179,8 +193,8 @@ df_nova <- nova_ind %>%
                                 "Vegetarisch" = "Vegetarian",
                                 "Fisch"="Fish",
                                 "Fleisch" = "Meat")) %>%
-  mutate(gender = ifelse(.$gender == "F", "Women", "Men")) %>% 
-  mutate(member = if_else(member == "Studierende", "Students", "Employees"))
+  mutate(gender = ifelse(.$gender == "F", "Female", "Male")) %>% 
+  mutate(member = if_else(member == "Studierende", "Students", "Staff"))
 
 
 # prepare text to annotate    
@@ -209,7 +223,10 @@ p <- ggplot(dat,
                 pct, 
                 fill = factor(label_content, attributes(NamesPerContent)$names), 
                 color = label_color)) + 
-        geom_bar(stat = "identity", position = position_stack(), color = NA) +
+        geom_bar(stat = "identity", 
+                 position = position_stack(), 
+                 color = NA,
+                 width = .8) +
         xlab("") +
         ylab("")+
         guides(fill = guide_legend("", reverse = TRUE, nrow = 1),
@@ -221,7 +238,8 @@ p <- ggplot(dat,
         geom_text(aes(label=ifelse(pct < 0.02,"", 
                                    scales::percent(round(pct, 2), accuracy = 1))),
                   size = 22*converter, 
-                  position = position_stack(vjust = 0.5)) + 
+                  position = position_stack(vjust = 0.5),
+                  fontface = "bold") + 
         coord_flip() +
         facet_wrap(~member, nrow = NULL, ncol = 1, scales = "free_y") +
         mytheme_survey 
@@ -231,8 +249,8 @@ ggsave(filename = paste0(wd_plots, "/pos_meal_gender_member_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 25,
-       height = 8,
+       width = 21,
+       height = 6,
        dpi = 300,
        device =  cairo_pdf)
 
@@ -245,7 +263,8 @@ ggsave(filename = paste0(wd_plots, "/pos_meal_gender_member_",
 df_nova <- nova_ind %>% 
   dplyr::filter(member != "Spezialkarten") %>% 
   filter(age_group != "keine Angaben") %>% 
-  mutate(label_content = stringr::str_replace(.$label_content, "Geflügel", "Meat")) %>% 
+  mutate(label_content = stringr::str_replace(.$label_content, 
+                                              "Geflügel", "Meat")) %>% 
   group_by(age_group, gender, label_content) %>%
   summarise(tot_sold = n()) %>% 
   mutate(pct = tot_sold / sum(tot_sold)) %>% 
@@ -265,7 +284,7 @@ df_nova <- nova_ind %>%
                             "35 bis 49-jährig" = "35 to 49 years old",
                             "50 bis 64-jährig" = "50 to 64 years old"
                             )) %>%
-  mutate(gender = ifelse(.$gender == "F", "Women", "Men")) 
+  mutate(gender = ifelse(.$gender == "F", "Female", "Male")) 
 
 # prepare text to annotate    
 df_text <- df_nova %>% 
@@ -291,20 +310,22 @@ p <- ggplot(dat,
                 color = label_color)) + 
         geom_bar(stat = "identity",
                  color = NA, 
-                 position = position_stack()) +
+                 position = position_stack(),
+                 width = .8) +
         coord_flip() + 
         xlab("") +
         ylab("")+
         guides(fill = guide_legend("",  nrow = 1, reverse = TRUE),
                color = "none")+
-        scale_y_continuous(labels=scales::percent)+
+        scale_y_origin(labels=scales::percent)+
         scale_fill_manual(values = NamesPerContent,
                           breaks = attributes(NamesPerContent)$name) +
         scale_color_manual(values = levels(dat$label_color))+
         geom_text(aes(label=ifelse(pct < 0.02,"", 
                                    scales::percent(round(pct, 2), accuracy = 1))),
                   size = 22 * converter,
-                  position = position_stack(vjust = 0.5)) + 
+                  position = position_stack(vjust = 0.5),
+                  fontface = "bold") + 
         facet_wrap(~age_group, nrow = NULL, ncol = 1, scales = "free_y") + 
         mytheme_survey 
 
@@ -313,8 +334,8 @@ ggsave(filename = paste0(wd_plots, "/pos_meal_gender_agegroups_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 15,
-       height = 25,
+       width = 21,
+       height = 10,
        dpi = 300,
        device =  cairo_pdf) 
 
@@ -333,11 +354,13 @@ df_nova <- nova_ind %>%
                                .$article == "Hot and Cold" ~ "Hot and Cold",
                                .$article == "World" ~ "Favorite/World",
                                .$article == "Favorite" ~ "Favorite/World")) %>% 
-  mutate(label_content = stringr::str_replace(.$label_content, "Geflügel", "Meat")) %>% 
+  mutate(label_content = stringr::str_replace(.$label_content, 
+                                              "Geflügel", "Meat")) %>% 
   group_by(gender, article, member, label_content) %>%
   summarise(tot_sold = n()) %>% 
   ungroup() %>% 
-  mutate(label_content = if_else(is.na(.$label_content), "Unbekannt", .$label_content)) %>% 
+  mutate(label_content = if_else(is.na(.$label_content), "Unbekannt", 
+                                 .$label_content)) %>% 
   mutate(label_content = recode(label_content, 
                                 "Unbekannt" = "Unknown",
                                 "Pflanzlich" = "Vegan (meat substitute)", 
@@ -345,8 +368,8 @@ df_nova <- nova_ind %>%
                                 "Vegetarisch" = "Vegetarian",
                                 "Fisch"="Fish",
                                 "Fleisch" = "Meat")) %>%
-  mutate(gender = if_else(.$gender == "F", "Women", "Men"))  %>% 
-  mutate(member = if_else(member == "Studierende", "Students", "Employees"))
+  mutate(gender = if_else(.$gender == "F", "Female", "Male"))  %>% 
+  mutate(member = if_else(member == "Studierende", "Students", "Staff"))
 
 
 # group it again
@@ -363,7 +386,8 @@ dat <- df_text %>%
     ungroup() %>% 
     mutate(text = paste("n = ", format(tot_sold, big.mark = "'"), sep = "")) %>% 
     select(-tot_sold) %>% 
-    left_join(df_text, .[ , c("gender", "member", "text")], by = c("gender", "member")) %>% 
+    left_join(df_text, .[ , c("gender", "member", "text")], 
+              by = c("gender", "member")) %>% 
     mutate(xlab = paste(gender, text, sep = "\n"))
 
 #my colors for the plot
@@ -384,20 +408,24 @@ p <- ggplot(dat,
                 color = label_color)) + 
         geom_bar(stat = "identity", 
                  position = position_stack(),
-                 color = NA) + 
+                 color = NA,
+                 width = .8) + 
         xlab("") +
         ylab("")+
         guides(fill = guide_legend("", reverse = FALSE, nrow = 1),
                color = "none")+
         scale_y_origin(labels=scales::percent) +
         scale_fill_manual(values = ColsPerPrice,
-                          breaks = c("Favorite/World", "Kitchen", "Hot and Cold"))+
+                          breaks = c("Favorite/World", 
+                                     "Kitchen", 
+                                     "Hot and Cold"))+
         scale_color_manual(values = levels(dat$label_color))+
         geom_text(aes(label=ifelse(pct < 0.02,"",
                                    scales::percent(round(pct,2), 
                                                    accuracy = 1))),
                   size = 22 * converter, 
-                  position = position_stack(vjust = 0.5)) + 
+                  position = position_stack(vjust = 0.5),
+                  fontface = "bold") + 
         facet_wrap(~member, ncol = 1, scales = "free_y")+
         coord_flip() +
         mytheme_survey 
@@ -407,8 +435,8 @@ ggsave(filename = paste0(wd_plots, "/pos_price_gender_member_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 25,
-       height = 8,
+       width = 21,
+       height = 6,
        dpi = 300,
        device =  cairo_pdf)
 
@@ -427,11 +455,13 @@ df_nova <- nova_ind %>%
                                .$article == "Hot and Cold" ~ "Hot and Cold",
                                .$article == "World" ~ "Favorite/World",
                                .$article == "Favorite" ~ "Favorite/World")) %>% 
-  mutate(label_content = stringr::str_replace(.$label_content, "Geflügel", "Meat")) %>% 
+  mutate(label_content = stringr::str_replace(.$label_content,
+                                              "Geflügel", "Meat")) %>% 
   group_by(article, gender, age_group, label_content) %>%
   summarise(tot_sold = n()) %>% 
   ungroup() %>% 
-  mutate(label_content = if_else(is.na(.$label_content), "Unbekannt", .$label_content)) %>% 
+  mutate(label_content = if_else(is.na(.$label_content), "Unbekannt",
+                                 .$label_content)) %>% 
   mutate(label_content = recode(label_content, 
                                 "Unbekannt" = "Unknown",
                                 "Pflanzlich" = "Vegan (meat substitute)", 
@@ -445,7 +475,7 @@ df_nova <- nova_ind %>%
                             "35 bis 49-jährig" = "35 to 49 years old",
                             "50 bis 64-jährig" = "50 to 64 years old"
                             )) %>%
-  mutate(gender = if_else(.$gender == "F", "Women", "Men")) 
+  mutate(gender = if_else(.$gender == "F", "Female", "Male")) 
 
 # group it again
 df_text <- df_nova %>% 
@@ -461,7 +491,8 @@ dat <- df_text %>%
     ungroup() %>% 
     mutate(text = paste("n = ", format(tot_sold, big.mark = "'"), sep = "")) %>% 
     select(-tot_sold) %>% 
-    left_join(df_text, .[ , c("age_group", "gender", "text")], by = c("age_group", "gender")) %>% 
+    left_join(df_text, .[ , c("age_group", "gender", "text")], 
+              by = c("age_group", "gender")) %>% 
     mutate(xlab = paste(gender, text, sep = "\n"))
 
 
@@ -477,20 +508,26 @@ p <- ggplot(dat,
                                           "Kitchen", 
                                           "Favorite/World")),
                 color = label_color)) + 
-        geom_bar(stat = "identity", position = "fill", color = NA) +
+        geom_bar(stat = "identity", 
+                 position = "fill", 
+                 color = NA,
+                 width = .8) +
         xlab("") +
         ylab("")+
         guides(fill = guide_legend("", reverse = FALSE, nrow = 1),
                color = "none")+
         scale_y_origin(labels=scales::percent) +
         scale_fill_manual(values = ColsPerPrice,
-                          breaks = c("Favorite/World", "Kitchen", "Hot and Cold"))+
+                          breaks = c("Favorite/World", 
+                                     "Kitchen", 
+                                     "Hot and Cold"))+
         scale_color_manual(values = levels(dat$label_color))+
         geom_text(aes(label=ifelse(pct < 0.02,"", 
                                    scales::percent(round(pct,2),
                                                    accuracy = 1))),
                   size = 22 * converter,
-                  position = position_stack(vjust = 0.5)) + 
+                  position = position_stack(vjust = 0.5),
+                  fontaface = "bold") + 
         facet_wrap(~age_group, ncol = 1, scales = "free_y")+
         coord_flip() +
         mytheme_survey 
@@ -500,8 +537,8 @@ ggsave(filename = paste0(wd_plots, "/pos_price_gender_agegroups_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 25,
-       height = 15,
+       width = 21,
+       height = 9,
        dpi = 300,
        device =  cairo_pdf)
 
@@ -533,28 +570,28 @@ df <- nova_ind %>%
 # exclude  one timers: people went only once to the canteen 
 one <-  df %>%  
     filter(tot_buy == 1) %>% 
-    mutate(food_type = "one")
+    mutate(lunch_type = "one")
 
 # exclude some timers: people went only 5 times in 60 days to the canteen 
 some <-  df %>%  
     filter(tot_buy > 1 & tot_buy <=5) %>% 
-    mutate(food_type = "some") 
+    mutate(lunch_type = "some") 
 
 # buffetarians: people only went to the hot and cold buffet 
 buffet <-  df %>%  
     filter(tot_buy > 5 & hnc == 1) %>% 
-    mutate(food_type = "buffet") 
+    mutate(lunch_type = "buffet") 
 
 
 # never meat: people never bought a meat meal
 never_meat <- df %>%
     filter(tot_buy > 5 & meaty == 0 & hnc == 0) %>% 
-    mutate(food_type = "never meat")
+    mutate(lunch_type = "never meat")
 
 # always meat: people always bough a meat meal
 alwy_meat <- df %>% 
     filter(tot_buy > 5 & meaty  == 1 & hnc == 0) %>% 
-    mutate(food_type = "always meat")
+    mutate(lunch_type = "always meat")
 
 # build groups of canteen visitors because of their meat consumption per week
 # minus buffetarians
@@ -570,22 +607,22 @@ df2 <- df %>%
 # Vegetarian Flexitarians: less than one fourth of all buying contain meat
 veg_flex <- df2 %>% 
     filter(meaty < 1/4) %>% 
-    mutate(food_type = "veg-flexitarian")
+    mutate(lunch_type = "veg-flexitarian")
 
 # Meat Flexitarians: less than the half of all buying contain meat
 meat_flex <- df2 %>% 
     filter(meaty >= 1/4 & meaty < 1/2) %>% 
-    mutate(food_type = "meat-flexitarian")
+    mutate(lunch_type = "meat-flexitarian")
 
 # meat-eaters: less than the three-quarters of all buying contain meat
 meat_eat <- df2 %>% 
     filter(meaty >= 1/2 & meaty < 3/4) %>% 
-    mutate(food_type = "meat-eater")
+    mutate(lunch_type = "meat-eater")
 
 # meat lovers
 meat_lovers <- df2 %>% 
     filter(meaty >= 3/4) %>% 
-    mutate(food_type = "meat lover")
+    mutate(lunch_type = "meat lover")
 
 
 # concatenate all canteen visitors
@@ -600,11 +637,11 @@ reg_visitors <- bind_rows(buffet,
 
 # prepare data
 dat <- reg_visitors %>% 
-  group_by(gender, member, food_type) %>% 
+  group_by(gender, member, lunch_type) %>% 
   summarise(tot_cluster = n()) %>% 
   mutate(pct_member = tot_cluster / sum(tot_cluster)) %>% 
   mutate(member = recode(member, "Studierende" = "Students",
-                         "Mitarbeitende" = "Employees")) %>%   
+                         "Mitarbeitende" = "Staff")) %>%   
   ungroup() 
 
 
@@ -614,14 +651,14 @@ dat %<>%
     summarise(tot_member = sum(tot_cluster)) %>% 
     left_join(dat, ., by = c("gender", "member")) %>% 
     ungroup() %>% 
-    mutate(gender = case_when(.$gender == "F" ~ "Women",
-                              .$gender == "M" ~ "Men")) %>% 
+    mutate(gender = case_when(.$gender == "F" ~ "Female",
+                              .$gender == "M" ~ "Male")) %>% 
     mutate(xlab_ = paste("(", tot_member, ")",sep = ""),
            xlab = paste(gender, xlab_, sep = "\n"))
 
 
 # detects dark color: for labelling the bars
-dat$label_color <- as.factor(sapply(unlist(NamesPerType1)[dat$food_type], 
+dat$label_color <- as.factor(sapply(unlist(ColsPerCat_blind)[dat$lunch_type], 
                                    function(color) { if (isDark(color)) 'white'
                                      else 'black' })) 
 
@@ -629,23 +666,26 @@ dat$label_color <- as.factor(sapply(unlist(NamesPerType1)[dat$food_type],
 #plot
 p <- ggplot(dat, aes(y = pct_member, 
                     x = xlab,
-                    fill = factor(food_type, 
-                                  levels = NamesPerType2$food_type), 
+                    fill = factor(lunch_type, 
+                                  levels = NamesPerType$lunch_type), 
                     color = label_color)) + 
   geom_bar(stat = "identity", 
-             position = position_stack(reverse = TRUE), 
-             color = NA) +
+           position = position_stack(reverse = TRUE), 
+           color = NA,
+           width = .8) +
   xlab("") +
   ylab("")+
   guides(fill = guide_legend(title = "", nrow = 1), 
            color = "none") +
-  scale_fill_manual(values = NamesPerType1, 
-                      breaks = names(NamesPerType1),
-                      labels = NamesPerType2$plot_names) +
+  scale_fill_manual(values = ColsPerCat_blind, 
+                      breaks = names(ColsPerCat_blind),
+                      labels = NamesPerType$plot_names) +
   geom_text(aes(label=ifelse(pct_member<0.02,"", 
-                               scales::percent(round(pct_member, 2), accuracy = 1))),
-              size = 22 * converter, 
-              position = position_stack(vjust = 0.5, reverse = TRUE)) +
+                               scales::percent(round(pct_member, 2),
+                                               accuracy = 1))),
+            size = 22 * converter, 
+            position = position_stack(vjust = 0.5, reverse = TRUE),
+            fontface = "bold") +
   scale_color_manual(values = levels(dat$label_color)) +  
   coord_flip() +
   facet_wrap(~ member, ncol = 1, scales = "free_y", 
@@ -654,12 +694,12 @@ p <- ggplot(dat, aes(y = pct_member,
   mytheme_survey
 
 
-ggsave(filename = paste0(wd_plots, "/food_type_gender_affiliation_",
+ggsave(filename = paste0(wd_plots, "/pos_lunch_type_affiliation_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
        height = 5,
-       width = 22,
+       width = 21,
        dpi = 300,
      device = cairo_pdf)
 
@@ -707,7 +747,7 @@ df_satis <- nova_survey %>%
   filter(mensa==1) %>% 
   mutate(intervention = ifelse(intervention==1,
                                "Intervention (n = 493)",
-                               "Basis (n = 381)"))
+                               "Basis week (n = 381)"))
 
 #check stats
 table(df_satis[, c("intervention")]$intervention)
@@ -719,14 +759,14 @@ df_mensa_satis1 <- df_satis %>%
   mutate(Wahl=satis_1) %>% # for aggregating at the end
   mutate(Zustimmung=sum(Wahl==4, na.rm = T)) %>% #to get the right order
   select(-c("satis_1")) %>% 
-  mutate(question = "Meine Erwartungen an das Menü haben sich erfüllt.")
+  mutate(question = "My expectations from the meal choice were met.")
 
 df_mensa_satis2 <- df_satis %>% 
   select(satis_2, intervention, mensa) %>% 
   mutate(Wahl=satis_2) %>% 
   mutate(Zustimmung=sum(Wahl==4, na.rm = T)) %>%
   select(-c("satis_2")) %>% 
-  mutate(question = "Ich fand das Menü gut.")
+  mutate(question = "The meal was good.")
 
 df_mensa_satis3 <- df_satis %>% 
   select(satis_3, intervention, mensa) %>% 
@@ -734,7 +774,7 @@ df_mensa_satis3 <- df_satis %>%
   mutate(Zustimmung=sum(Wahl==4, na.rm = T)) %>%
   mutate(Wahl=satis_3) %>% 
   select(-c("satis_3")) %>% 
-  mutate(question = "Ich werde dieses Menü nicht mehr nehmen.")
+  mutate(question = "I would not choose this meal again.")
 
 
 
@@ -744,10 +784,10 @@ dat <- bind_rows(df_mensa_satis1,
                             df_mensa_satis3) %>%  
   mutate(Wahl = recode(.$Wahl, 
                        .missing = "NA", 
-                       "1" = "trifft nicht zu",
-                       "2" = "trifft eher nicht zu",
-                       "3" = "trifft eher zu",
-                       "4" = "trifft zu" )) %>% 
+                       "1" = "not applicable",
+                       "2" = "rather not applicable",
+                       "3" = "rather applicable",
+                       "4" = "applicable" )) %>% 
   group_by(question, Zustimmung, intervention, Wahl) %>%
   summarise(tot_answ = n()) %>%  
   mutate(pct_answ = (tot_answ/sum(tot_answ))) 
@@ -768,7 +808,10 @@ p <- ggplot(data = dat,
            y = pct_answ, 
            fill = factor(Wahl, attributes(ColsPerCat_survey2)$names), 
        color = label_color)) +
-  geom_bar(stat = "identity", position = position_stack(), color = NA) +
+  geom_bar(stat = "identity",
+           position = position_stack(), 
+           color = NA,
+           width = .8) +
   scale_fill_manual(breaks = attributes(ColsPerCat_survey2)$name,
                     values = ColsPerCat_survey2) +
   geom_text(aes(label=(if_else(pct_answ<0.0249, "",
@@ -780,17 +823,18 @@ p <- ggplot(data = dat,
   xlab("")+
   ylab("")+
   guides(color = "none", fill = guide_legend("", reverse = TRUE, nrow = 1)) +
-  ggtitle("Wie zufrieden sind Sie mit dem gewählten Menü?\n(Frage 3, Experimentwoche, n = 874)")+
+  ggtitle("How satisfied are you with your meal choice?
+\n(Question 3, Experiment week, n = 874)")+
   coord_flip() +
   mytheme_survey +
   facet_wrap(~question,  nrow = NULL, ncol = 1, scales = "free_y") +
   scale_y_origin(labels = scales::percent)
   
-ggsave(filename = paste0(wd_plots, "/survey_satisfaction_",
+ggsave(filename = paste0(wd_plots, "/survey_choice_satisfaction_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 2.25,
+       width = 21,
        height = 8,
        dpi = 300,
        device = cairo_pdf)
@@ -806,13 +850,13 @@ ggsave(filename = paste0(wd_plots, "/survey_satisfaction_",
 df_meat <- nova_survey %>%
   filter(fill == 0) %>% 
   filter(!is.na(meat)) %>% 
-  mutate(meat_diet = case_when (meat==7 ~ "Fleischliebhaber (n = 146)",
-                              meat==6 ~ "Fleischliebhaber (n = 146)",
-                              meat==5 ~ "Fleischesser (n = 118)",
-                              meat==4 ~ "Fleisch-Flexitarier (n = 177)",
-                              meat==3 ~ "Vegi-Flexitarier (n = 183)",
-                              meat==2 ~ "Fleischvermeider (n = 139)",
-                              meat==1 ~ "Fleischvermeider (n = 139)", 
+  mutate(meat_diet = case_when (meat==7 ~ "Meat lover (n = 146)",
+                              meat==6 ~ "Meat lover (n = 146)",
+                              meat==5 ~ "Meat eater (n = 118)",
+                              meat==4 ~ "Meat-flexitarian (n = 177)",
+                              meat==3 ~ "Vegetarian-flexitarian (n = 183)",
+                              meat==2 ~ "Meat avoider (n = 139)",
+                              meat==1 ~ "Meat avoider (n = 139)", 
                               TRUE ~ as.character(NA)))
 
 #check stats
@@ -864,10 +908,10 @@ dat <- bind_rows(df_VT_tho1,
                  df_VT_tho5) %>% 
   mutate(Wahl = recode(.$Wahl, 
                        .missing = "NA",
-                       "1" = "stimme nicht zu",
-                       "2" = "stimme eher nicht zu",
-                       "3" = "stimme eher zu", 
-                       "4" = "stimme zu" )) %>% 
+                       "1" = "disagree",
+                       "2" = "rather disagree",
+                       "3" = "rather agree", 
+                       "4" = "agree" )) %>% 
   group_by(question, order_plot, meat_diet, Wahl) %>%
   summarise(tot_answ = n()) %>%  
   mutate(pct = (tot_answ/sum(tot_answ)))
@@ -890,16 +934,17 @@ p <- ggplot(data = dat,
            color = label_color)) +
   geom_bar(stat = "identity", 
            position = position_stack(), 
-           color = NA) +
+           color = NA,
+           width = .8) +
   scale_color_manual(values = levels(dat$label_color)) +
   scale_fill_manual(breaks = attributes(ColsPerCat_survey1)$name,
                     values = ColsPerCat_survey1) +
   #to get the order right
-  scale_x_discrete(limits=c("Fleischvermeider (n = 140)",
-                            "Vegi-Flexitarier (n = 183)",
-                            "Fleisch-Flexitarier (n = 177)",
-                            "Fleischesser (n = 118)",
-                            "Fleischliebhaber (n = 146)"))+
+  scale_x_discrete(limits=c("Meat avoider (n = 139)",
+                            "Vegetarian-flexitarian (n = 183)",
+                            "Meat-flexitarian (n = 177)",
+                            "Meat eater (n = 118)",
+                            "Meat lover (n = 146)"))+
   geom_text(aes(label=(ifelse(pct<0.0249, "",
                               paste( round(pct*100),
                                      "%", 
@@ -910,19 +955,19 @@ p <- ggplot(data = dat,
   xlab("")+
   ylab("")+
   guides(color = "none", fill = guide_legend("", reverse = TRUE, nrow=1)) +
-  ggtitle("Inwiefern stimmen Sie im Allgemeinen folgenden Aussagen zum Essen zu?\n(Frage 7, Fleischkonsumtyp, n = 764)\n\nIch mache mir allgemein Gedanken über die Folgen...")+
+  ggtitle("In general, to what extent do you agree with the following statements on eating habits?\n(Question 7, Type of meat consumption, n = 763)\n\nIn general, I think about the consequences...")+
   coord_flip() +
   mytheme_survey +
   facet_wrap(~question,  nrow = NULL, ncol = 1, scales = "free_y") +
   scale_y_origin(labels = scales::percent)
 
 
-ggsave(filename = paste0(wd_plots, "/survey_meat_type_attitude_",
+ggsave(filename = paste0(wd_plots, "/survey_lunch_type_attitude_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p, 
-       width = 2.25,
-       height = 6,
+       width = 24,
+       height = 14,
        dpi=300,
        device=cairo_pdf)
 
@@ -996,10 +1041,10 @@ dat <- bind_rows(df_linie_tho1,
                           df_linie_tho5) %>% 
   mutate(Wahl = recode(.$Wahl, 
                        .missing = "NA",
-                       "1" = "stimme nicht zu",
-                       "2" = "stimme eher nicht zu",
-                       "3" = "stimme eher zu",
-                       "4" = "stimme zu" )) %>%
+                       "1" = "disagree",
+                       "2" = "rather disagree",
+                       "3" = "rather agree",
+                       "4" = "agree" )) %>%
   group_by(question, order_plot, Inhalt, Wahl) %>%
   summarise(tot_answ = n()) %>%
   mutate(pct_answ = (tot_answ/sum(tot_answ))) 
@@ -1019,7 +1064,8 @@ p <- ggplot(data = dat,
                 fill = factor(Wahl, levels = attributes(ColsPerCat_survey1)$names),
                               color = label_color)) +
   geom_bar(stat = "identity", position = position_stack(),
-           color = NA) +
+           color = NA,
+           width = .8) +
   scale_fill_manual(breaks = attributes(ColsPerCat_survey1)$name,
                     values = ColsPerCat_survey1) +
   scale_x_discrete(limits=c("Hot & Cold (n = 148)",
@@ -1029,14 +1075,14 @@ p <- ggplot(data = dat,
   geom_text(aes(label=(if_else(pct_answ < 0.0249, "",
                                paste(round(pct_answ * 100), "%", 
                                       sep = "")))), 
-            size = 22, 
+            size = 22*converter, 
             fontface = "bold", 
             position = position_stack(vjust = 0.5))+
   scale_color_manual(values = levels(dat$label_color)) +
   xlab("")+
   ylab("")+
   guides(color = "none", fill = guide_legend("", reverse = TRUE, nrow = 1)) +
-  ggtitle("Inwiefern stimmen Sie im Allgemeinen folgenden Aussagen zum Essen zu?\n(Frage 7, Menüinhalt, n = 798)\n\nIch mache mir allgemein Gedanken über die Folgen ...")+
+  ggtitle("In general, to what extent do you agree with the following statements on eating habits?\n(Question 7, Dish content, n = 798)\n\nIn general, I think about the consequences...")+
   coord_flip() +
   mytheme_survey +
   facet_wrap(~question,  nrow = NULL, ncol = 1, scales = "free_y") +
@@ -1047,10 +1093,10 @@ ggsave(filename = paste0(wd_plots, "/survey_meal_content_attitude_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p, 
-       width = 14.5,
-       height = 12.5,
-       dpi=300,
-       device=cairo_pdf)
+       width = 24,
+       height = 14,
+       dpi = 300,
+       device = cairo_pdf)
 
 
 ```
@@ -1063,7 +1109,7 @@ ggsave(filename = paste0(wd_plots, "/survey_meal_content_attitude_",
 #prepare data
 df_gender <- nova_survey %>% 
   filter(gender=="Mann" | gender=="Frau") %>%  #surcey counts 1146
-  mutate(gender_2 = if_else(gender=="Mann", "Men (n = 651)", "Women (n = 495)"))
+  mutate(gender_2 = if_else(gender=="Mann", "Male (n = 651)", "Female (n = 495)"))
 
 #prepare single items
 df_gender_tho1 <- df_gender %>% 
@@ -1118,10 +1164,10 @@ dat <- bind_rows(df_gender_tho1,
                  df_gender_tho5) %>%  
   mutate(Wahl = recode(.$Wahl,
                        .missing = "NA",
-                       "1" = "stimme nicht zu",
-                       "2" = "stimme eher nicht zu",
-                       "3" = "stimme eher zu", 
-                       "4" = "stimme zu" )) %>% 
+                       "1" = "disagree",
+                       "2" = "rather disagree",
+                       "3" = "rather agree", 
+                       "4" = "agree" )) %>% 
   group_by(question, order_plot, Inhalt, Wahl) %>%
   summarise(tot_answ = n()) %>%  
   mutate(pct_answ = (tot_answ/sum(tot_answ))) 
@@ -1145,7 +1191,8 @@ p <- ggplot(data = dat,
            color = label_color)) +
   geom_bar(stat = "identity",
            position = position_stack(), 
-           color = NA) +
+           color = NA,
+           width = .8) +
   scale_fill_manual(breaks = attributes(ColsPerCat_survey1)$name,
                     values = ColsPerCat_survey1) +
   geom_text(aes(label=(if_else(pct_answ<0.0249,
@@ -1159,7 +1206,7 @@ p <- ggplot(data = dat,
   xlab("")+
   ylab("")+
   guides(color = "none", fill = guide_legend("", reverse = TRUE, nrow=1)) +
-  ggtitle("Inwiefern stimmen Sie im Allgemeinen folgenden Aussagen zum Essen zu?\n(Frage 7, Geschlecht, n = 1146)\n\nIch mache mir allgemein Gedanken über die Folgen ...")+
+  ggtitle("In general, to what extent do you agree with the following statements on eating habits?\n(Question 7, Gender, n = 1,146)\n\nIn general, I think about the consequences...")+
   coord_flip() +
   mytheme_survey +
   facet_wrap(~question,  nrow = NULL, ncol = 1, scales = "free_y") +
@@ -1167,14 +1214,14 @@ p <- ggplot(data = dat,
 
 
 
-ggsave(filename = paste0(wd_plots, "/survey_gender_environment_attitude_",
+ggsave(filename = paste0(wd_plots, "/survey_gender_attitude_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p, 
-       width = 14.5,
-       height = 10.9,
-       dpi=300,
-       device=cairo_pdf)
+       width = 22,
+       height = 11,
+       dpi = 300,
+       device = cairo_pdf)
 
 ```
 
@@ -1187,7 +1234,7 @@ ggsave(filename = paste0(wd_plots, "/survey_gender_environment_attitude_",
 #prepare data for plot
 df_gender <- nova_survey %>% 
   filter(gender=="Mann" | gender=="Frau") %>%  #Anzahl Fragebogen 1147
-  mutate(gender_2 = if_else(gender=="Mann", "Men (n = 651)", "Women (n = 495)"))
+  mutate(gender_2 = if_else(gender=="Mann", "Male (n = 651)", "Female (n = 495)"))
 
 #prepare items
 df_gender_tra1 <- df_gender %>% 
@@ -1196,7 +1243,7 @@ df_gender_tra1 <- df_gender %>%
   mutate(Wahl = tra_1) %>% 
   mutate(order_plot = 2) %>% 
   select(-c("tra_1")) %>% 
-  mutate(question = "...gesund zu leben.")
+  mutate(question = "...to live a healthy lifestyle.")
 
 df_gender_tra2 <- df_gender %>% 
   select(tra_2, gender_2) %>% 
@@ -1204,7 +1251,7 @@ df_gender_tra2 <- df_gender %>%
   mutate(Wahl=tra_2) %>% 
   mutate(order_plot = 4)  %>% 
   select(-c("tra_2")) %>% 
-  mutate(question = "...mit meinem Verhalten die Umwelt möglichst wenig zu belasten.")
+  mutate(question = "...to pollute the environment as little as possible through my own actions.")
 
 df_gender_tra3 <- df_gender %>% 
   select(tra_3, gender_2) %>% 
@@ -1212,7 +1259,7 @@ df_gender_tra3 <- df_gender %>%
   mutate(Wahl=tra_3) %>% 
   mutate(order_plot = 5)  %>% 
   select(-c("tra_3")) %>% 
-  mutate(question = "...dass die Welt sozial gerechter wird.")
+  mutate(question = "...that the world become a socially more just place.")
 
 df_gender_tra4 <- df_gender %>% 
   select(tra_4, gender_2) %>% 
@@ -1220,7 +1267,7 @@ df_gender_tra4 <- df_gender %>%
   mutate(Wahl=tra_4) %>% 
   mutate(order_plot = 3)  %>% 
   select(-c("tra_4")) %>% 
-  mutate(question = "...dass die Arbeitsbedingungen für alle Menschen human sind.")
+  mutate(question = "...that working conditions are humane for everyone.")
 
 df_gender_tra5 <- df_gender %>% 
   select(tra_5, gender_2) %>% 
@@ -1228,7 +1275,7 @@ df_gender_tra5 <- df_gender %>%
   mutate(Wahl=tra_5) %>% 
   mutate(order_plot = 1)  %>% 
   select(-c("tra_5")) %>% 
-  mutate(question = "...dass Tiere möglichst argerecht gehalten werden.")
+  mutate(question = "...that, as far as possible, livestock is kept in species-appropriate conditions.")
 
 
 # Datensätze zusammenführen
@@ -1239,10 +1286,10 @@ dat <- bind_rows(df_gender_tra1,
                  df_gender_tra5) %>% 
   mutate(Wahl = recode(.$Wahl,
                        .missing = "NA", 
-                       "1" = "stimme nicht zu",
-                       "2" = "stimme eher nicht zu",
-                       "3" = "stimme eher zu", 
-                       "4" = "stimme zu" )) %>% 
+                       "1" = "disagree",
+                       "2" = "rather disagree",
+                       "3" = "rather agree", 
+                       "4" = "agree" )) %>% 
   group_by(question, order_plot, Inhalt, Wahl) %>%
   summarise(tot_answ = n()) %>%  
   mutate(pct_answ = (tot_answ/sum(tot_answ)))  
@@ -1265,7 +1312,8 @@ p <- ggplot(data = dat,
            color = label_color)) +
   geom_bar(stat = "identity", 
            position = position_stack(), 
-           color = NA) +
+           color = NA,
+           width = .8) +
   scale_color_manual(values = levels(dat$label_color)) +
   scale_fill_manual(breaks = attributes(ColsPerCat_survey1)$name,
                     values = ColsPerCat_survey1) +
@@ -1277,21 +1325,21 @@ p <- ggplot(data = dat,
   xlab("")+
   ylab("")+
   guides(color = "none", fill = guide_legend("", reverse = TRUE, nrow = 1)) +
-  ggtitle("Inwiefern stimmen Sie im Allgemeinen folgenden Aussagen zu?\n(Frage 8, Geschlecht, n = 1146)\n\nMir ist es allgemein wichtig, ...")+
+  ggtitle("In general, to what extent do you agree with the following statements?\n(Question 8, Gender, n = 1,146)\n\nIn general, I think it is important...")+
   coord_flip() +
   mytheme_survey +
   facet_wrap(~question,  nrow = NULL, ncol = 1, scales = "free_y") +
   scale_y_origin(labels = scales::percent)
 
 
-ggsave(filename = paste0(wd_plots, "/survey_gender_attitude_",
+ggsave(filename = paste0(wd_plots, "/survey_gender_thoughts_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 14.5,
-       height = 10.9,
-       dpi=300,
-       device=cairo_pdf)
+       width = 22,
+       height = 11,
+       dpi = 300,
+       device = cairo_pdf)
 
 ```
 

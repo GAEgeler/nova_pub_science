@@ -2,46 +2,51 @@
 # Theme for plotting
 ######
 ###
-# state: november 2021
+# state: january 2022
 # author: gian-Andrea egeler
 ###
 
+#infos from here: https://www.science.org/content/page/instructions-preparing-initial-manuscript
+
 
 #translate meal labels into english
-labels = c(health = "...meiner Ernährungsweise für meine Gesundheit.",
-           environment = "...meiner Ernährungsgewohnheiten für die Umwelt.",
-           production = "...der Produktion der Nahrungsmittel auf meinem Teller für die Arbeitenden in der Wertschöpfungskette.",
-           animal = "...meines Konsums von tierischen Nahrungsmitteln für die Tiere.",
-           money = "...meiner Ernährung für mein Portemonnaie.")
+labels = c(health = "...of my nutrition on my health.",
+           environment = "...of my nutritional habits on the environment.",
+           production = "...of the production of foods I eat on those working in supply chains.",
+           animal = "...of my consumption of animal products on animals.",
+           money = "...of my nutrition on my finances.")
            
 
 
-####define colors---------
-#POS plots food_types (lunch)
-NamesPerType1 =  c("buffet" = "#e64d00",
-                "never meat" = "#99f200",
-                "veg-flexitarian" = "#80ccff", 
-                "meat-flexitarian" = "#6619e6",
-                "meat-eater" = "#c5b87c" , 
-                "meat lover" = "#fad60d",
-                "always meat" = "#262626")
+
+#define colors for plot-----
+## canteen lunch types
+#kudos: https://davidmathlogic.com/colorblind/
+ColsPerCat_blind =  c("buffet" = "#004D40", 
+                      "never meat" = "#1E88E5",
+                      "veg-flexitarian" = "#AAED89",
+                      "meat-flexitarian" = "#5D6395",
+                      "meat-eater" =  "#c5b87c",
+                      "meat lover" = "#F59D28",
+                      "always meat" = "#D81B60") 
 
 
-#food types
-NamesPerType2 = tibble::tibble(food_type = c("buffet", 
-                                           "never meat",
-                                           "veg-flexitarian",
-                                           "meat-flexitarian",
-                                           "meat-eater",
-                                           "meat lover",
-                                           "always meat"),
-                             plot_names = c("Buffetarian",
-                                            "Never Meat",
-                                            "Vegetarian\nFlexitarian", 
-                                            "Meat\nFlexitarian",
-                                            "Meat Eater" , 
-                                            "Meat Lover",
-                                            "Always Meat"))
+
+#food types names
+NamesPerType = tibble::tibble(lunch_type = c("buffet", 
+                                             "never meat",
+                                             "veg-flexitarian",
+                                             "meat-flexitarian",
+                                             "meat-eater",
+                                             "meat lover",
+                                             "always meat"),
+                              plot_names = c("Buffetarian",
+                                             "Never meat",
+                                             "Vegetarian-\nflexitarian", 
+                                             "Meat-\nflexitarian",
+                                             "Meat eater" , 
+                                             "Meat lover",
+                                             "Always meat"))
 
 
 #POS plots meal content
@@ -53,18 +58,30 @@ NamesPerContent = c("Unknown" = "black",
                     "Meat" = "#fad60d",
                     "Hot and Cold"="#4c4848")
 
+##colors for meal content
+#attention defines also the order of the legend
+NamesPerContent2 = c("Unknown" = "black",
+                   "Vegan (substitute)" = "grey90", 
+                   "Vegan (authentic)" = "#1E88E5",
+                   "Vegetarian" = "#AAED89", 
+                   "Fish" = "#5D6395", 
+                   "Meat" = "#FFC107",
+                   "Hot&Cold (buffet)" = "#004D40")
+
+
+
 #survey plots
 ColsPerCat_survey1 = c("NA" = "grey",
-                      "stimme nicht zu" = "#DC6413", 
-                      "stimme eher nicht zu" = "#Fdd200", 
-                      "stimme eher zu" = "#AFC410", 
-                      "stimme zu"="#006885")
+                      "disagree" = "#DC6413", 
+                      "rather disagree" = "#Fdd200", 
+                      "rather agree" = "#AFC410", 
+                      "agree"="#006885")
 
 ColsPerCat_survey2 = c("NA" = "grey",
-                       "trifft nicht zu" = "#DC6413", 
-                       "trifft eher nicht zu" = "#Fdd200", 
-                       "trifft eher zu" = "#AFC410", 
-                       "trifft zu"="#006885")
+                       "not applicable" = "#DC6413", 
+                       "rather not applicable" = "#Fdd200", 
+                       "rather applicable" = "#AFC410", 
+                       "applicable" = "#006885")
 
 
 
