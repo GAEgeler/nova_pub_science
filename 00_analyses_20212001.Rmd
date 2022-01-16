@@ -22,9 +22,8 @@ renv::restore()
 #load functions
 source("R/01_plot_functions_211112.R")
 source("R/01_config_file_211112.R")
+source("R/01_plot_theme_211112.R")
 
-
-#TODO: mostly agree vs. rather agree??
 
 ```
 
@@ -219,8 +218,8 @@ dat$label_color <- as.factor(sapply(unlist(NamesPerContent)[dat$label_content],
 
 #plot
 p <- ggplot(dat, 
-            aes(xlab, 
-                pct, 
+            aes(x = forcats::fct_rev(xlab), 
+                y = pct, 
                 fill = factor(label_content, attributes(NamesPerContent)$names), 
                 color = label_color)) + 
         geom_bar(stat = "identity", 
@@ -304,8 +303,8 @@ dat$label_color <- as.factor(sapply(unlist(NamesPerContent)[dat$label_content],
                                       { if (isDark(color)) 'white' else 'black' })) 
 #plot
 p <- ggplot(dat,
-            aes(xlab,
-                pct,
+            aes(x = forcats::fct_rev(xlab),
+                y = pct,
                 fill = factor(label_content, attributes(NamesPerContent)$name),
                 color = label_color)) + 
         geom_bar(stat = "identity",
@@ -400,8 +399,8 @@ dat$label_color <- as.factor(sapply(unlist(ColsPerPrice)[dat$article],
                                       { if (isDark(color)) 'white' else 'black' })) 
 #plot
 p <- ggplot(dat, 
-            aes(xlab, 
-                pct, 
+            aes(x = forcats::fct_rev(xlab), 
+                y = pct, 
                 fill = factor(article, levels = c( "Hot and Cold", 
                                                    "Kitchen", 
                                                    "Favorite/World")),
@@ -502,8 +501,8 @@ dat$label_color <- as.factor(sapply(unlist(ColsPerPrice)[dat$article],
                                       { if (isDark(color)) 'white' else 'black'})) 
 #plot
 p <- ggplot(dat,
-            aes(xlab,
-                pct,
+            aes(x = forcats::fct_rev(xlab),
+                y = pct,
                 fill = factor(article, c( "Hot and Cold",
                                           "Kitchen", 
                                           "Favorite/World")),
@@ -527,7 +526,7 @@ p <- ggplot(dat,
                                                    accuracy = 1))),
                   size = 22 * converter,
                   position = position_stack(vjust = 0.5),
-                  fontaface = "bold") + 
+                  fontface = "bold") + 
         facet_wrap(~age_group, ncol = 1, scales = "free_y")+
         coord_flip() +
         mytheme_survey 
@@ -665,7 +664,7 @@ dat$label_color <- as.factor(sapply(unlist(ColsPerCat_blind)[dat$lunch_type],
 
 #plot
 p <- ggplot(dat, aes(y = pct_member, 
-                    x = xlab,
+                    x = forcats::fct_rev(xlab),
                     fill = factor(lunch_type, 
                                   levels = NamesPerType$lunch_type), 
                     color = label_color)) + 
@@ -679,7 +678,7 @@ p <- ggplot(dat, aes(y = pct_member,
            color = "none") +
   scale_fill_manual(values = ColsPerCat_blind, 
                       breaks = names(ColsPerCat_blind),
-                      labels = NamesPerType$plot_names) +
+                      labels = NamesPerType$plot_names_rmp) +
   geom_text(aes(label=ifelse(pct_member<0.02,"", 
                                scales::percent(round(pct_member, 2),
                                                accuracy = 1))),
@@ -694,12 +693,13 @@ p <- ggplot(dat, aes(y = pct_member,
   mytheme_survey
 
 
+
 ggsave(filename = paste0(wd_plots, "/pos_lunch_type_affiliation_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
        height = 5,
-       width = 21,
+       width = 24,
        dpi = 300,
      device = cairo_pdf)
 
@@ -804,7 +804,7 @@ dat$question <- reorder(dat$question, -dat$Zustimmung)
 
 ## plot ----
 p <- ggplot(data = dat, 
-       aes(x = intervention, 
+       aes(x = forcats::fct_rev(intervention), 
            y = pct_answ, 
            fill = factor(Wahl, attributes(ColsPerCat_survey2)$names), 
        color = label_color)) +
@@ -834,7 +834,7 @@ ggsave(filename = paste0(wd_plots, "/survey_choice_satisfaction_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p,
-       width = 21,
+       width = 23,
        height = 8,
        dpi = 300,
        device = cairo_pdf)
@@ -850,13 +850,13 @@ ggsave(filename = paste0(wd_plots, "/survey_choice_satisfaction_",
 df_meat <- nova_survey %>%
   filter(fill == 0) %>% 
   filter(!is.na(meat)) %>% 
-  mutate(meat_diet = case_when (meat==7 ~ "Meat lover (n = 146)",
-                              meat==6 ~ "Meat lover (n = 146)",
-                              meat==5 ~ "Meat eater (n = 118)",
-                              meat==4 ~ "Meat-flexitarian (n = 177)",
-                              meat==3 ~ "Vegetarian-flexitarian (n = 183)",
-                              meat==2 ~ "Meat avoider (n = 139)",
-                              meat==1 ~ "Meat avoider (n = 139)", 
+  mutate(meat_diet = case_when (meat==7 ~ "Meat lover (dmp) (n = 146)",
+                              meat==6 ~ "Meat lover (dmp) (n = 146)",
+                              meat==5 ~ "Meat eater (dmp) (n = 118)",
+                              meat==4 ~ "Meat-flexitarian (dmp) (n = 177)",
+                              meat==3 ~ "Vegetarian-flexitarian (dmp) (n = 183)",
+                              meat==2 ~ "Meat avoider (dmp) (n = 139)",
+                              meat==1 ~ "Meat avoider (dmp) (n = 139)", 
                               TRUE ~ as.character(NA)))
 
 #check stats
@@ -940,11 +940,11 @@ p <- ggplot(data = dat,
   scale_fill_manual(breaks = attributes(ColsPerCat_survey1)$name,
                     values = ColsPerCat_survey1) +
   #to get the order right
-  scale_x_discrete(limits=c("Meat avoider (n = 139)",
-                            "Vegetarian-flexitarian (n = 183)",
-                            "Meat-flexitarian (n = 177)",
-                            "Meat eater (n = 118)",
-                            "Meat lover (n = 146)"))+
+  scale_x_discrete(limits=c("Meat avoider (dmp) (n = 139)",
+                            "Vegetarian-flexitarian (dmp) (n = 183)",
+                            "Meat-flexitarian (dmp) (n = 177)",
+                            "Meat eater (dmp) (n = 118)",
+                            "Meat lover (dmp) (n = 146)"))+
   geom_text(aes(label=(ifelse(pct<0.0249, "",
                               paste( round(pct*100),
                                      "%", 
@@ -955,7 +955,7 @@ p <- ggplot(data = dat,
   xlab("")+
   ylab("")+
   guides(color = "none", fill = guide_legend("", reverse = TRUE, nrow=1)) +
-  ggtitle("In general, to what extent do you agree with the following statements on eating habits?\n(Question 7, Type of meat consumption, n = 763)\n\nIn general, I think about the consequences...")+
+  ggtitle("In general, to what extent do you agree with the following statements on eating habits?\n(Question 7, Type of meat preference, n = 763)\n\nIn general, I think about the consequences...")+
   coord_flip() +
   mytheme_survey +
   facet_wrap(~question,  nrow = NULL, ncol = 1, scales = "free_y") +
@@ -966,8 +966,8 @@ ggsave(filename = paste0(wd_plots, "/survey_lunch_type_attitude_",
                          format(Sys.Date(), "%y%m%d"),
                          ".pdf"),
        p, 
-       width = 24,
-       height = 14,
+       width = 26,
+       height = 18,
        dpi=300,
        device=cairo_pdf)
 
@@ -1185,7 +1185,7 @@ dat$question <- forcats::fct_reorder(dat$question, dat$order_plot)
 
 ## plot ----
 p <- ggplot(data = dat, 
-       aes(x = Inhalt, 
+       aes(x = forcats::fct_rev(Inhalt), 
            y = pct_answ, 
            fill = factor(Wahl, levels= attributes(ColsPerCat_survey1)$names),
            color = label_color)) +
@@ -1306,7 +1306,7 @@ dat$question <- forcats::fct_reorder(dat$question,
 
 ## plot
 p <- ggplot(data = dat,
-       aes(x = Inhalt,
+       aes(x = forcats::fct_rev(Inhalt),
            y = pct_answ,
            fill = factor(Wahl, levels = attributes(ColsPerCat_survey1)$names),
            color = label_color)) +

@@ -40,14 +40,13 @@ NamesPerType = tibble::tibble(lunch_type = c("buffet",
                                              "meat-eater",
                                              "meat lover",
                                              "always meat"),
-                              plot_names = c("Buffetarian",
-                                             "Never meat",
-                                             "Vegetarian-\nflexitarian", 
-                                             "Meat-\nflexitarian",
-                                             "Meat eater" , 
-                                             "Meat lover",
-                                             "Always meat"))
-
+                              plot_names_rmp = c("Buffetarian (rmp)",
+                                             "Never meat (rmp)",
+                                             "Vegetarian-\nflexitarian (rmp)", 
+                                             "Meat-\nflexitarian (rmp)",
+                                             "Meat eater (rmp)" , 
+                                             "Meat lover (rmp)",
+                                             "Always meat (rmp)"))
 
 #POS plots meal content
 NamesPerContent = c("Unknown" = "black",
@@ -165,25 +164,25 @@ converter = (25.4/72.27)
 
 ### for plots form survey
 
-mytheme_survey <- theme_bw()+ 
-    theme(plot.title = element_text(size = 22, face = "bold",  
-                                    margin = margin(0, 0, .05, 0., "cm")),
-          axis.text.x = element_text(size = 22),
-          axis.text.y = element_text(size = 22),
-          legend.text = element_text(size = 22),
-          legend.title = element_text(size = 22),
-          strip.text.x = element_text(size = 22,  face = "bold",  
+mytheme_survey <- ggplot2::theme_bw()+ 
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 22, face = "bold",  
+                                    margin = ggplot2::margin(0, 0, .05, 0., "cm")),
+          axis.text.x = ggplot2::element_text(size = 22),
+          axis.text.y = ggplot2::element_text(size = 22),
+          legend.text = ggplot2::element_text(size = 22),
+          legend.title = ggplot2::element_text(size = 22),
+          strip.text.x = ggplot2::element_text(size = 22,  face = "bold",  
                                       hjust = 0, 
-                                      margin = margin(.05, 0, .05, 0.05, "cm")),
-          axis.title.y = element_text(size = 22,
-                                      margin = margin(t = 0, r = 0, b = 0, l = 0)),
-          axis.title.x = element_text(size = 22, 
-                                      margin = margin(t = 0, r = 0, b = 0, l = 0)),
-          plot.subtitle = element_text(margin=margin(b=15), size = 22),
-          plot.caption = element_text(margin=margin(t=15), face="italic", size=  22),
-          panel.spacing = unit(1, "lines"),
+                                      margin = ggplot2::margin(.05, 0, .05, 0.05, "cm")),
+          axis.title.y = ggplot2::element_text(size = 22,
+                                      margin = ggplot2::margin(t = 0, r = 0, b = 0, l = 0)),
+          axis.title.x = ggplot2::element_text(size = 22, 
+                                      margin = ggplot2::margin(t = 0, r = 0, b = 0, l = 0)),
+          plot.subtitle = ggplot2::element_text(margin = ggplot2::margin(b=15), size = 22),
+          plot.caption = ggplot2::element_text(margin = ggplot2::margin(t=15), face="italic", size=  22),
+          panel.spacing = ggplot2::unit(1, "lines"),
           legend.position = "bottom",
-          legend.key.size = unit(1.5, "cm"),
-          legend.margin=margin(-0.5, 0, 0.05, 0, "cm"),
+          legend.key.size = ggplot2::unit(1.5, "cm"),
+          legend.margin = ggplot2::margin(-0.5, 0, 0.05, 0, "cm"),
           text = ggplot2::element_text(family = ggplot2::theme_get()$text$family),
-          plot.margin=unit(c(t = 0, r = 0, b = 0, l = 0),"cm"))
+          plot.margin = ggplot2::unit(c(t = 0, r = 0, b = 0, l = 0),"cm"))
